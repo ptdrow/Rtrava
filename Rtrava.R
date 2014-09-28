@@ -1,4 +1,4 @@
-# Rtrava 0.1.0
+# Rtrava 0.2.0
 # Library for the Strava API v3 in R
 
 # AUTHETICATION
@@ -14,6 +14,15 @@ strava_oauth <- function(app_name, app_client_id, app_secret, app_scope = NULL) 
 }
 
 # GET
+# Getting data with requests that doesn't require for queries or pagination
+get_basic <- function(url_, stoken){
+      
+      req <- GET(url_, stoken)
+      stop_for_status(req)
+      dataRaw <- content(req)
+      return (dataRaw)
+}
+
 # Getting several pages of one type of request
 get_pages<-function(url_, per_page = 30, page_id = 1, page_num = 1, All = FALSE){
       
@@ -38,15 +47,44 @@ get_pages<-function(url_, per_page = 30, page_id = 1, page_num = 1, All = FALSE)
                   break
             }
       }
-      dataRaw
+      return(dataRaw)
 }
 
 # ATHLETE
 # Setting the url of the athlete to get data from
-url_athlete <- function(id=NULL){
+# Leaving the id = NULL will get the authenticated user data
+url_athlete <- function(id = NULL){
+      
       url_ <- "https://www.strava.com/api/v3/athlete"
       if(!is.null(id))
             url_ <- paste(url_,"s/",id, sep = "")
       return(url_)
 }
       
+get_athlete <-function(stoken, id = NULL){
+      
+      dataRaw <- get_basic(url_athlete(id), stoken)
+      return(dataRaw)
+}
+
+get_following <- function(following, stoken, id = NULL){
+      
+      #following must be equal to "friends", "followers" or "both-following"
+      url_ <- paste(url_athlete(id),"/", following, sep = "")
+      dataRaw <- get_basic(url_, stoken)
+      return(dataRaw)
+}
+
+get_KOMs <- function(id){
+      
+      url_ <- paste(url_athlete(id),"/koms", sep = "")
+      dataRaw <- get_basic(url_, stoken)
+      return(dataRaw)
+}
+
+#ACTIVITIES
+get_activity_list <- function(){
+      url_ <- paste(url_athlete(),"/activities", sep = "")
+      dataRaw <- get_basic(url_, stoken)
+      return(dataRaw)
+}
