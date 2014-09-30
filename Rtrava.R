@@ -1,4 +1,4 @@
-# Rtrava 0.4.1
+# Rtrava 0.4.2
 # Library for the Strava API v3 in R
 
 
@@ -24,8 +24,10 @@ strava_oauth <- function(app_name, app_client_id, app_secret, app_scope = NULL) 
 }
 
 # The token should be configured to work in the httr functions. Use the next line of code to configure it.
-#stoken <- config(token = strava_oauth(app_name, app_client_id, app_secret, app_scope))
+# stoken <- config(token = strava_oauth(app_name, app_client_id, app_secret, app_scope))
 
+# Use this line for the first time you use the get functions
+# usage_left <- as.integer(c(600, 30000))
 
 # RATE LIMIT
 # Checks the ratelimit values after the last request and stores the left requests in a global variable
