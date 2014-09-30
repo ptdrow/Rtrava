@@ -1,4 +1,4 @@
-# Rtrava 0.4.0
+# Rtrava 0.4.1
 # Library for the Strava API v3 in R
 
 
@@ -6,8 +6,13 @@
 
 # AUTHETICATION
 # Generate a token for an user and the desired scope. It sends the user to the strava authentication page
-# if he/she hasn't given permission to the app yet:
+# if he/she hasn't given permission to the app yet, else, is sent to the app webpage:
 strava_oauth <- function(app_name, app_client_id, app_secret, app_scope = NULL) {
+      # app_name:      Name of the app (string)
+      # app_client_id: ID received when the app was registered (string)
+      # app_secret:    Secret received when the app was registered (string)
+      # app_scope:     Scopes for the authentication (string)
+      #                Must be "public" (or NULL), "write", "view_private", or "view_private,write"
       
       strava_app <- oauth_app(app_name, app_client_id, app_secret)  
       
@@ -24,8 +29,9 @@ strava_oauth <- function(app_name, app_client_id, app_secret, app_scope = NULL) 
 
 # RATE LIMIT
 # Checks the ratelimit values after the last request and stores the left requests in a global variable
-
 ratelimit <- function(req){
+      # req: Output from the GET(...) function
+      
       limit <- as.integer(strsplit(req$headers$`x-ratelimit-limit`, ",")[[1]])
       usage <- as.integer(strsplit(req$headers$`x-ratelimit-usage`, ",")[[1]])
       usage_left <<- limit - usage
@@ -34,6 +40,8 @@ ratelimit <- function(req){
 # GET
 # Getting data with requests that doesn't require for queries or pagination
 get_basic <- function(url_, stoken){
+      # url_:   URL to get data from (string)
+      # stoken: Configured token (output from config(token = strava_oauth(...)))
       
       req <- GET(url_, stoken)
       ratelimit(req)
@@ -44,11 +52,18 @@ get_basic <- function(url_, stoken){
 
 # Getting several pages of one type of request
 get_pages<-function(url_, stoken, per_page = 30, page_id = 1, page_max = 1, queries=NULL, All = FALSE){
+      # url_:     URL to get data from (string)
+      # stoken:   Configured token (output from config(token = strava_oauth(...)))
+      # per_page: Number of items retrieved per page. Max=200 (integer)
+      # page_id:  First page to get data from. (integer)
+      # page_max: Max number of pages to get data from. (integer)
+      # queries:  Specific additional queries or parameters (list)
+      # All:      TRUE if you want all pages possible according to the number of pages and ratelimit (logic)
       
       dataRaw <- list()
       
       if(All){
-            per_page=200 #200 is the max number of items per page. Setting it to 200 reduces the number of requests
+            per_page=200 #reduces the number of requests
             page_id=1
             page_max=usage_left[1]
       }
@@ -76,8 +91,9 @@ get_pages<-function(url_, stoken, per_page = 30, page_id = 1, page_max = 1, quer
 
 # ATHLETE
 # Set the url of the athlete to get data from (according to its ID)
-# Leaving the id = NULL will get the authenticated user data
 url_athlete <- function(id = NULL){
+      # id: ID of the athlete (string or integer)
+      #     Leaving the id = NULL will set the authenticated user URL
       
       url_ <- "https://www.strava.com/api/v3/athlete"
       if(!is.null(id))
@@ -87,6 +103,9 @@ url_athlete <- function(id = NULL){
 
 #Get the athlete's data
 get_athlete <-function(stoken, id = NULL){
+      # stoken: Configured token (output from config(token = strava_oauth(...)))
+      # id:     ID of the athlete (string or integer)
+      #         Leaving the id = NULL will get the authenticated user data
       
       dataRaw <- get_basic(url_athlete(id), stoken)
       return(dataRaw)
@@ -94,8 +113,10 @@ get_athlete <-function(stoken, id = NULL){
 
 #Get the list of friends or followers from an user or the both-following according to another user
 get_following <- function(following, stoken, id = NULL){
+      # stoken:    Configured token (output from config(token = strava_oauth(...)))
+      # following: Query. Must be equal to "friends", "followers" or "both-following"
+      # id:        ID of the athlete (string or integer)
       
-      #following must be equal to "friends", "followers" or "both-following"
       url_ <- paste(url_athlete(id),"/", following, sep = "")
       dataRaw <- get_basic(url_, stoken)
       return(dataRaw)
@@ -103,6 +124,8 @@ get_following <- function(following, stoken, id = NULL){
 
 #Get the list of KOMs/QOMs/CRs of an athlete
 get_KOMs <- function(id, stoken){
+      #id:     ID of the athlete (string or integer)
+      #stoken: Configured token (output from config(token = strava_oauth(...)))
       
       url_ <- paste(url_athlete(id),"/koms", sep = "")
       dataRaw <- get_basic(url_, stoken)
@@ -112,6 +135,10 @@ get_KOMs <- function(id, stoken){
 #ACTIVITIES
 #Set the url of activities for differents activities lists.
 url_activities <- function(id=NULL, friends=FALSE, club=FALSE){
+      #id:      ID of the activity or club if club=TRUE (string).
+      #friends: TRUE if you want the friends activities of the authenticated user (logic)
+      #club:    TRUE if you want the activities of a club (logic)
+      
       url_ <- "https://www.strava.com/api/v3/activities/"
       if(!is.null(id)){
             if(club){#Url for the activities of the club with ID = id
@@ -133,7 +160,13 @@ url_activities <- function(id=NULL, friends=FALSE, club=FALSE){
 
 #Get the activities list of the desired type (club, friends, user)
 get_activity_list <- function(stoken, id = NULL, club = FALSE, friends = FALSE){
+      #stoken:  Configured token (output from config(token = strava_oauth(...)))
+      #id:      ID of the activity or club if club=TRUE (string)
+      #friends: TRUE if you want the friends activities of the authenticated user (logic)
+      #club:    TRUE if you want the activities of a club (logic)
+      
       #This codes assumes requesting all the pages of activities. In other circunstances change the parameters of 'get_pages'
+      
       if (friends | club){
             dataRaw <- get_pages(url_activities(id = id, club = club, friends=friends), stoken, per_page = 200, page_id = 1, page_max = 1)
       }
@@ -146,7 +179,9 @@ get_activity_list <- function(stoken, id = NULL, club = FALSE, friends = FALSE){
 
 #Get detailed data of an activity. It includes the segment efforts
 get_activity <- function(id, stoken){
-            
+      # id:     ID of the required activity
+      # stoken: Configured token (output from config(token = strava_oauth(...)))
+      
       req <- GET(url_activities(id), stoken, query = list(include_all_efforts=TRUE)) 
       stop_for_status(req)
       dataRaw <- content(req)
@@ -156,6 +191,9 @@ get_activity <- function(id, stoken){
 #CLUBS
 #Set the url of the clubs for the different requests
 url_clubs <- function(id=NULL, request=NULL){
+      # id:      ID of the club. If NULL gets the clubs of the authenticated athlete
+      # request: must be "members", "activities" or NULL for club details
+      
       if(is.null(id)){#Clubs of the authenticated athlete
             url_ <- paste(url_athlete(), "/clubs", sep = "")
       }
@@ -167,10 +205,14 @@ url_clubs <- function(id=NULL, request=NULL){
 
 #Get the data according to the different requests or urls.
 get_club <- function(stoken, id=NULL, request=NULL){
+      # stoken:  Configured token (output from config(token = strava_oauth(...)))
+      # id:      ID of the club. If NULL gets the clubs of the authenticated athlete
+      # request: Must be "members", "activities" or NULL for club details
+      
       if(is.null(id)){
             dataRaw <- get_basic(url_clubs(), stoken)
       }
-      else{ #request must be "members", "activities" or NULL for club details
+      else{ 
             switch(request,
                    NULL = dataRaw <- get_basic(url_clubs(id), stoken),
                    
@@ -186,11 +228,14 @@ get_club <- function(stoken, id=NULL, request=NULL){
 #SEGMENTS
 #Set the differente url for the segments requests
 url_segment <- function(id=NULL, request=NULL) {
+      # id:      ID of the segment
+      # request: Must be "starred", "all_efforts", "leaderboard" or NULL for club details
+      
       if(!is.null(request)){
             if(!is.null(id) & request == "starred"){
                   url_ <- paste("https://www.strava.com/api/v3/athlete/", id,"/segments/starred", sep="")
             }
-            else{#request must be "starred", "all_efforts", "leaderboard" or NULL for club details
+            else{
                   url_ <- "https://www.strava.com/api/v3/segments/"
                   if(request == "starred"){
                         url_ <- paste(url_, "starred", sep="")
@@ -208,30 +253,42 @@ url_segment <- function(id=NULL, request=NULL) {
 
 #Retrieve details about a specific segment.
 get_segment <- function(stoken, id=NULL, request=NULL){
+      #stoken: Configured token (output from config(token = strava_oauth(...)))
+      #id:     ID of the segment
       
       dataRaw <- get_basic(url_segment(id), stoken)
       return(dataRaw)
 }
 
-get_starred <- function(stoken, id=NULL){
-      # Returns a summary representation of the segments starred by
-      # the authenticated user if id=NULL, or by athelete's id.
+# Retrieve a summary representation of the segments starred by an athlete
+get_starred <- function(stoken, id=NULL){     
+      #stoken: Configured token (output from config(token = strava_oauth(...)))
+      #id:     ID of the athlete. If NULL gets the authenticate athlete
       
       dataRaw <- get_basic(url_segment(id=id, request="starred"), stoken)
       return(dataRaw)
 }
 
+#Retrieve the leaderboard of a segment
 get_leaderboard <- function(stoken, id, nleaders=10, All=FALSE){
-      #Returns the leaderboard if All=TRUE or the top nleaders of a segment specified by the id
+      #stoken:   Configured token (output from config(token = strava_oauth(...)))
+      #id:       ID of the segment (string)
+      #nleaders: Number of leaders to retrieve
+      #All:      TRUE to retrieve all the list (logic)
+      
+      
       dataRaw <- get_pages(url_segment(id, request="leaderboard"), stoken, 
                            per_page = nleaders, All = All)
       return(dataRaw)
 }
 
+#Get all the efforts in a segment if no queries are specified
 get_efforts_list <- function(stoken, id,athlete_id=NULL, start_date_local=NULL, end_date_local=NULL){
-      #Retrieves all the efforts in a segment if no queries are specified
-      #If is given the athlete_id it returns only his/her efforts
-      #Dates can be given to change the time range for the efforts to retrive
+      #stoken:     Configured token (output from config(token = strava_oauth(...)))
+      #id:         ID of the segment (string or integer)
+      #athlete_id: ID of an athlete to filter the data (string or integer)
+      #start_date_local and end_date_local are queries for filtering the data. Haven't check the required date format yet
+      
       queries <- list(athlete_id=athlete_id,
                       start_date_local=start_date_local,
                       end_date_local=end_date_local)
@@ -243,11 +300,12 @@ get_efforts_list <- function(stoken, id,athlete_id=NULL, start_date_local=NULL, 
 #STREAMS
 #Set the url for the different requests of streams
 url_streams  <- function(id, request="activities", types=list("latlng")){
-      # 'types' should be a list with any combination of:
-      # "time", "latlng", "distance", "altitude", "velocity_smooth", "heartrate",
-      # "cadence", "watts", "temp", "moving", "grade_smooth"
-      # 'request' must be equal to "activities", "segment_efforts", or "segments"
-      
+      # id:      ID associated withe the request
+      # request: Must be equal to "activities", "segment_efforts", or "segments"
+      # types:   Must be a list with any combination of:
+      #          "time", "latlng", "distance", "altitude", "velocity_smooth", "heartrate",
+      #          "cadence", "watts", "temp", "moving" and "grade_smooth"
+            
       #Converting the list of types into the proper string
       strtypes <- types[[1]]
       if(length(types)>1){
@@ -264,9 +322,15 @@ url_streams  <- function(id, request="activities", types=list("latlng")){
 #Retrieve the streams
 get_streams  <- function(stoken, id, request="activities",
                          types, resolution="all", series_type="distance"){
+      # stoken:      Configured token (output from config(token = strava_oauth(...)))
+      # id:          ID associated withe the request
+      # request:     Must be equal to "activities", "segment_efforts", or "segments"
+      # types:       Must be a list with any combination of:
+      #              "time", "latlng", "distance", "altitude", "velocity_smooth", "heartrate",
+      #              "cadence", "watts", "temp", "moving" and "grade_smooth"
+      # resolution:  Query for the data to get. Can be "low", "medium", "high" or "all"
+      # series_type: Query for merging the data if resolution != "all". Can be "distance" or "time"
       
-      #resolution can be "low", "medium", "high" or "all"
-      #series_type can be "distance" or "time"
       req <- GET(url_streams(id, request, types), stoken,
                  query = list(resolution=resolution, series_type=series_type))
       ratelimit(req)
