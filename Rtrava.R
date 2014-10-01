@@ -1,4 +1,4 @@
-# Rtrava 0.4.2
+# Rtrava 0.4.3
 # Library for the Strava API v3 in R
 
 
@@ -7,7 +7,7 @@
 # AUTHETICATION
 # Generate a token for an user and the desired scope. It sends the user to the strava authentication page
 # if he/she hasn't given permission to the app yet, else, is sent to the app webpage:
-strava_oauth <- function(app_name, app_client_id, app_secret, app_scope = NULL) {
+strava_oauth <- function(app_name, app_client_id, app_secret, app_scope = NULL,  cache = FALSE) {
       # app_name:      Name of the app (string)
       # app_client_id: ID received when the app was registered (string)
       # app_secret:    Secret received when the app was registered (string)
@@ -20,7 +20,7 @@ strava_oauth <- function(app_name, app_client_id, app_secret, app_scope = NULL) 
                 request = "https://www.strava.com/oauth/authorize?",
                 authorize = "https://www.strava.com/oauth/authorize",
                 access = "https://www.strava.com/oauth/token"),
-                strava_app, scope = app_scope)
+                strava_app, scope = app_scope, cache = cache)
 }
 
 # The token should be configured to work in the httr functions. Use the next line of code to configure it.
