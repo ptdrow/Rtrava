@@ -5,15 +5,15 @@ source("./Libraries/Rtrava.R")
 source("./Libraries/stravaUrbANA.R")
 source("./Libraries/tidyDataEfforts.R")
 
-segment_id <- 3817376 #Put here a desired segment's id
+segment_id <- '3817376' #Put here a desired segment's id
       
 #Recalls tidy_SegmentEfforts from tidyDataEfforts.R
 #Requires a valid token already stored in 'stoken'
-dataTidy <- tidy_SegmentEfforts(stoken,segment_id)
+dataTidy <- tidy_SegmentEfforts(stoken, segment_id)
 
 shinyServer(function(input, output) {
             
-      output$efforts_plot <- renderPlot({            
+      uoutput$efforts_plot <- renderPlot({            
            
 
             y <- switch(input$Gender, 
