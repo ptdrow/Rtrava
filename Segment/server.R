@@ -6,16 +6,20 @@ source("./Libraries/stravaUrbANA.R")
 source("./Libraries/tidyDataEfforts.R")
 
 segment_id <- '3817376' #Put here a desired segment's id
-      
+
 #Recalls tidy_SegmentEfforts from tidyDataEfforts.R
 #Requires a valid token already stored in 'stoken'
-dataTidy <- tidy_SegmentEfforts(stoken, segment_id)
+# dataTidy <- tidy_SegmentEfforts(stoken, segment_id)
+dataTidy <- dget('./Data/tidy3817376.R')
+
+# names for choices in correct format
+athletes <- escaped_unicode(dataTidy$Name)
 
 shinyServer(function(input, output) {
             
-      uoutput$efforts_plot <- renderPlot({            
+      output$efforts_plot <- renderPlot({            
            
-
+          
             y <- switch(input$Gender, 
                            "Todos" = dataTidy$Elapsed_Time,
                            "Hombres" = dataTidy[!dataTidy$Gender=="F",]$Elapsed_Time,
@@ -82,7 +86,7 @@ shinyServer(function(input, output) {
             # UI component and send it to the client.
             switch(input$Gender,
                    "Usuario" = selectInput("athlete", "Usuario(a)",
-                                               choices = as.character(sort(dataTidy$Name)),
+                                               choices = athletes
 #                                                selected = "Pedro Villarroel"
                    )
                    )
