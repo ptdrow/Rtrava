@@ -90,7 +90,7 @@ calc_segment_energy_data <-function(dataTidy, dataLeaders){
       
       count_All <- length(unique(mergedData$Id))
       count_females <- length(unique(mergedData$Id[mergedData$Gender=="F"]))
-      count_males <- count_all - count_females
+      count_males <- count_All - count_females
       
       Males <- average_energy(gender_Data(mergedData, "M"))
       Females <- average_energy(gender_Data(mergedData, "F"))
