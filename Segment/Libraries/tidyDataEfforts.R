@@ -213,3 +213,18 @@ tidy_SegmentEfforts <- function(stoken, id){
       
       
 #segment_energy_data <- calc_segment_energy_data(dataRaw, dataLeaders)
+
+######
+# format unicode text using escaped character, used for Shiny App
+# output is parsed expression
+# 'str_in' is character or factor vector of names to convert
+escaped_unicode <- function(str_in){
+  
+  out <- as.character(sort(str_in))
+  out <- gsub("<U+", "\\u", out, fixed = T)
+  out <- gsub(">|'", "", out)
+  out <- parse(text = paste0("'", out, "'"))
+    
+  return(out)
+  
+}
