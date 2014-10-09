@@ -1,3 +1,4 @@
+#0.3.1
 #modificar calc_segment_energy_Data para que use la info obtenida con mergeData
 
 #Get the names and gender of a the athletes of a leaderboard according to the id
@@ -219,12 +220,15 @@ tidy_SegmentEfforts <- function(stoken, id){
 # output is parsed expression
 # 'str_in' is character or factor vector of names to convert
 escaped_unicode <- function(str_in){
-  
-  out <- as.character(sort(str_in))
-  out <- gsub("<U+", "\\u", out, fixed = T)
-  out <- gsub(">|'", "", out)
-  out <- parse(text = paste0("'", out, "'"))
-    
-  return(out)
-  
+
+      char_out <- character(length(str_in))
+      out <- as.character(str_in)
+      
+      out <- gsub("<U+", "\\u", out, fixed = T)
+      out <- gsub(">|'", "", out)
+      out <- parse(text = paste0("'", out, "'"))
+      
+      for(i in 1:length(str_in)) char_out[i]<-out[[i]]
+      
+      return(char_out)  
 }
