@@ -1,6 +1,6 @@
-# Rtrava 0.4.3
+# Rtrava 0.5.0
 # Library for the Strava API v3 in R
-
+# Added functions for exploring strava segments
 
 # Dependencies: httr.
 
@@ -40,12 +40,12 @@ ratelimit <- function(req){
 }
 
 # GET
-# Getting data with requests that doesn't require for queries or pagination
-get_basic <- function(url_, stoken){
+# Getting data with requests that don't require for pagination
+get_basic <- function(url_, stoken, queries = NULL){
       # url_:   URL to get data from (string)
       # stoken: Configured token (output from config(token = strava_oauth(...)))
       
-      req <- GET(url_, stoken)
+      req <- GET(url_, stoken, query = queries)
       ratelimit(req)
       stop_for_status(req)
       dataRaw <- content(req)
@@ -228,10 +228,12 @@ get_club <- function(stoken, id=NULL, request=NULL){
 }
 
 #SEGMENTS
-#Set the differente url for the segments requests
+#Set the url for the different segment requests
 url_segment <- function(id=NULL, request=NULL) {
-      # id:      ID of the segment
-      # request: Must be "starred", "all_efforts", "leaderboard" or NULL for club details
+      # id:      ID of the segment (for request= "all_efforts", "leaderboard")
+      #          or ID of the athlete (in case using request="starred" of an selected athlete)
+      #          or NULL (in case of using request="explore" or "starred" of the athenticated user)
+      # request: Must be "starred", "all_efforts", "leaderboard", "explore" or NULL for segment details
       
       if(!is.null(request)){
             if(!is.null(id) & request == "starred"){
@@ -239,8 +241,8 @@ url_segment <- function(id=NULL, request=NULL) {
             }
             else{
                   url_ <- "https://www.strava.com/api/v3/segments/"
-                  if(request == "starred"){
-                        url_ <- paste(url_, "starred", sep="")
+                  if(request == "starred" | request == "explore"){
+                        url_ <- paste(url_, request, sep="")
                   }
                   else{
                         url_ <- paste(url_, id, "/", request, sep = "")
@@ -296,6 +298,24 @@ get_efforts_list <- function(stoken, id,athlete_id=NULL, start_date_local=NULL, 
                       end_date_local=end_date_local)
       
       dataRaw <- get_pages(url_segment(id, request="all_efforts"), stoken, queries=queries, All=TRUE)
+      return(dataRaw)
+}
+
+get_explore <- function(stoken, bounds, activity_type="riding", max_cat=NULL, min_cat=NULL){
+      #stoken:        Configured token (output from config(token = strava_oauth(...)))
+      #bounds:        string representing the comma separated list of bounding box corners 
+      #               'sw.lat,sw.lng,ne.lat,ne.lng' 
+      #               'south,west,north,east
+      #               eg.: bounds="37.821362,-122.505373,37.842038,-122.465977"
+      #activity_type: "riding" or "running"
+      #max_cat:       integer representing the max climbing category
+      #min_cat:       integer reprenenting the min climbing category
+      
+      url_ <- url_segment(request="explore")
+      dataRaw <- get_basic(url_, stoken, queries=list(bounds=bounds,
+                                                   activity_type=activity_type,
+                                                   max_cat=max_cat,
+                                                   min_cat=min_cat))
       return(dataRaw)
 }
 
