@@ -7,7 +7,7 @@ shinyUI(
             
             sidebarLayout(
                   sidebarPanel(
-                        h4("Segment App 0.3.6"),
+                        h4("Segment App 0.3.7"),
                         
                         selectInput("segment", strong("Segmento"),
                                     choices = as.character(segments$name)),

@@ -1,4 +1,4 @@
-#SegmentApp 0.3.6
+#SegmentApp 0.3.7
 
 # library(httr)
 # source("Rtrava.R")
@@ -34,7 +34,9 @@ shinyServer(function(input, output) {
             dates <- ymd_hms(dataTidy$Date)
             tmax <- max(dataTidy$Elapsed_Time)
             tmin <- min(dataTidy$Elapsed_Time)
-            with(dataTidy, plot(dates, Elapsed_Time, type="n"))
+            with(dataTidy, plot(dates, Elapsed_Time, type="n",
+                                main=paste("Registros del segmento",input$segment),
+                                xlab="Fecha del registro", ylab="Registro [s]"))
             
             switch(input$Gender, 
                    "Todos" = {
@@ -42,7 +44,7 @@ shinyServer(function(input, output) {
                               points(dates[!dataTidy$Gender=="F"], Elapsed_Time, col = "blue", pch = 19, cex = 1.25))
                          
                          with(subset(dataTidy, Gender == "F"), points(dates[dataTidy$Gender=="F"], Elapsed_Time, col = "violetred1", pch=19, cex=1.25))
-                         legend("topright", pch = 16, col = c("blue", "violetred1"), legend = c("Hombres", "Mujeres"))
+                         legend("topright", pch = 19, col = c("blue", "violetred1"), legend = c("Hombres", "Mujeres"))
                          },
                    "Hombres" = {
                          with(subset(dataTidy, Gender != "F"), points(dates[!dataTidy$Gender=="F"], Elapsed_Time, col = "blue", pch=19, cex=1.25))
@@ -72,7 +74,7 @@ shinyServer(function(input, output) {
             abline(h = mean(dataTidy[dataTidy$Gender=="F",'Elapsed_Time']), lty = 2, col = "violetred1")
             #abline(h=mean(dataTidy))
             
-            
+             
 #                  main="Registros del segmento 4833626 ", sub=as.character(segments[as.character(segments$name)==input$segment,2]),
 #                  xlab="Nro de Registro", ylab="Registro [s]",
 #                  ylim=c(tmin, tmax), xlim=c(0,length(dataTidy$Elapsed_Time)))
@@ -118,13 +120,13 @@ shinyServer(function(input, output) {
                   # ylim <- c(0,nrow(dataTidy)/2)
             }
             h <-hist(x, #breaks=nbreaks,
-                     main="Histograma del segmento 4833626 ", sub="",
+                     main=paste("Histograma de registros del segmento",input$segment), sub="",
                      xlab="Registro [s]", ylab="Frecuencia",
-                     xlim=c(xmin, xmax),#ylim=ylim
+                     xlim=c(xmin, xmax), col="darkorchid4" #ylim=ylim
             )
             rug(x)
-            xfit<-seq(min(x),max(x),length=60) 
-            yfit<-dnorm(xfit,mean=mean(x),sd=sd(x)) 
+            xfit <- seq(min(x),max(x),length=60) 
+            yfit <- dnorm(xfit,mean=mean(x),sd=sd(x)) 
             yfit <- yfit*diff(h$mids[1:2])*length(x) 
             lines(xfit, yfit, col="blue", lwd=2)            
       })
