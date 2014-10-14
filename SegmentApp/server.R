@@ -1,4 +1,4 @@
-#SegmentApp 0.3.7
+#SegmentApp 0.4.0
 
 # library(httr)
 # source("Rtrava.R")
@@ -7,15 +7,15 @@
 library(lubridate)
 source("functions.R")
 
-
 segments <- dget("./dataTidy/segments.R")
-colores <- c("green", "red", "blue", "black", "orange", "darkmagenta", "darkseagreen2", "yellow")
+
 selected <- "Pedro Villarroel"
 
 shinyServer(function(input, output) {
       
       dataSegment <- reactive({
             id <- segments[as.character(segments$name)==input$segment,1]
+            #id <- "4079969.R"
             dget(paste("./dataTidy/",id,".R",sep=""))
       })
       
@@ -25,64 +25,52 @@ shinyServer(function(input, output) {
             dataTidy <- dataTidy[dataTidy$Elapsed_Time >= datarange[1] & 
                                        dataTidy$Elapsed_Time <= datarange[2] ,]
             dataTidy$Name <- escaped_unicode(dataTidy$Name)
+            dataTidy$Date <- ymd_hms(dataTidy$Date)
+            
             dataTidy
       })
       
       output$efforts_plot <- renderPlot({
             dataTidy <- dataInput()            
             
-            dates <- ymd_hms(dataTidy$Date)
+            #dates <- ymd_hms(dataTidy$Date)
             tmax <- max(dataTidy$Elapsed_Time)
             tmin <- min(dataTidy$Elapsed_Time)
-            with(dataTidy, plot(dates, Elapsed_Time, type="n",
+            with(dataTidy, plot(Date, Elapsed_Time, type="n",
                                 main=paste("Registros del segmento",input$segment),
                                 xlab="Fecha del registro", ylab="Registro [s]"))
             
-            switch(input$Gender, 
+            switch(input$Gender,
                    "Todos" = {
-                         with(subset(dataTidy, Gender != "F"),
-                              points(dates[!dataTidy$Gender=="F"], Elapsed_Time, col = "blue", pch = 19, cex = 1.25))
-                         
-                         with(subset(dataTidy, Gender == "F"), points(dates[dataTidy$Gender=="F"], Elapsed_Time, col = "violetred1", pch=19, cex=1.25))
-                         legend("topright", pch = 19, col = c("blue", "violetred1"), legend = c("Hombres", "Mujeres"))
-                         },
+                         plot_efforts(dataTidy, KOM = TRUE, Males = TRUE)
+                         plot_efforts(dataTidy, KOM = TRUE, Males = FALSE)
+                         legend("topright", pch = c(1,19,1,19) , col = c("blue", "blue", "violetred1", "violetred1"), legend = c("Hombres", "KOMs", "Mujeres", "QOMs"))
+                                      },
                    "Hombres" = {
-                         with(subset(dataTidy, Gender != "F"), points(dates[!dataTidy$Gender=="F"], Elapsed_Time, col = "blue", pch=19, cex=1.25))
-                         legend("topright", pch = 16, col = "blue", legend = "Hombres")
+                         plot_efforts(dataTidy, KOM = TRUE, Males = TRUE)
+                         legend("topright", pch = c(1,19), col = c("blue", "blue"), legend = c("Hombres", "KOMs"))
                    },
                    "Mujeres" = {
-                         with(subset(dataTidy, Gender == "F"), points(dates[dataTidy$Gender=="F"], Elapsed_Time, col = "violetred1", pch=19, cex=1.25))
-                         legend("topright", pch = 16, col = "violetred1", legend = "Mujeres")
+                         plot_efforts(dataTidy, KOM = TRUE, Males = FALSE)
+                         legend("topright", pch = c(1,19), col = c("violetred1","violetred1"), legend = c("Mujeres", "QOMs"))
                    },
                    "Usuario"= {
+                         colores <- c("springgreen4", "red", "blue", "black", "orange", "darkmagenta", "green", "yellow")
                          selected <- chosen()
-                         #browser()
-                         usersdata <- logical(length(dataTidy$Name))
                          i <- 0
                          for(athlete in selected){
                                i <- i + 1
-                               with(subset(dataTidy, Name == athlete),
-                                    points(dates[dataTidy$Name==athlete], Elapsed_Time, col = colores[i], pch=19, cex=1.25))
+                               plot_efforts(dataTidy, KOM = TRUE, athlete = athlete, acolor = colores[i])
                                abline(h = mean(dataTidy[dataTidy$Name==athlete,'Elapsed_Time']), lty = 2, col = colores[i])
                          }
-                         legend("topright", pch = 16, col = colores[1:length(selected)], legend = selected)
-                         
+                         legend("topright", pch = 1, col = colores[1:length(selected)], legend = selected)
                    }
             )
-            abline(h=mean(dataTidy$Elapsed_Time), lty=2)
+            #abline(h=mean(dataTidy$Elapsed_Time), lty=2)
             abline(h = mean(dataTidy[!dataTidy$Gender=="F",'Elapsed_Time']), lty = 2, col = "blue")
-            abline(h = mean(dataTidy[dataTidy$Gender=="F",'Elapsed_Time']), lty = 2, col = "violetred1")
-            #abline(h=mean(dataTidy))
-            
-             
-#                  main="Registros del segmento 4833626 ", sub=as.character(segments[as.character(segments$name)==input$segment,2]),
-#                  xlab="Nro de Registro", ylab="Registro [s]",
-#                  ylim=c(tmin, tmax), xlim=c(0,length(dataTidy$Elapsed_Time)))
-            
+            abline(h = mean(dataTidy[dataTidy$Gender=="F",'Elapsed_Time']), lty = 2, col = "violetred1")            
             
       })
-      
-      #       output$variables <- renderText()
       
       output$efforts_hist <- renderPlot({
             dataTidy <- dataInput()            
@@ -106,7 +94,7 @@ shinyServer(function(input, output) {
             tmax <- max(dataTidy$Elapsed_Time)
             
             if(input$Gender=="Usuario"){
-#     
+                                    #     
                   xmin <- min(x)*0.5
                   xmax <- max(x)*1.5
                   # ylim <- NULL
@@ -133,9 +121,9 @@ shinyServer(function(input, output) {
       
       chosen <- reactive({
             
-            if (is.null(input$athlete)) return(NULL)
+            if (is.null(input$athlete)) return("Pedro Villarroel")
             input$athlete
-            #browser()
+            
       })
       
       output$ui <- renderUI({
