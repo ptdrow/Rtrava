@@ -1,6 +1,6 @@
-#**Rtrava**#
+Rtrava
+=====
 
--------------
 
 Library for the Strava API v3 in R
 
@@ -10,4 +10,4 @@ This library allows retrieving data from the running and cycling tracker Strava,
 
 To use the library you need your own app client and secret from the Developers page of Strava. See the API documentation for more info on how to register your own app and the resources availables from the API: http://strava.github.io/api/
 
---------
+------
