@@ -5,6 +5,8 @@ Rtrava
 Library for the Strava API v3 in R
 
 
+THIS PROJECT IS DISCONTINUED. The Rtrava project is no longer developed and it was merged to the [rStrava package](https://github.com/fawda123/rStrava).
+
 ----------
 This library allows retrieving data from the running and cycling tracker Strava, directly from its API. It is coded in R language and uses the httr package to deal with the API. Here you can see a demo Shiny app that uses Strava data previously downloaded with the Rtrava functions: [https://ptdrow.shinyapps.io/SegmentApp/](https://ptdrow.shinyapps.io/SegmentApp/)
 
